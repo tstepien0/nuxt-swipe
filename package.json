@@ -5,17 +5,16 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/module.mjs",
-      "require": "./dist/module.cjs"
+      "import": "./dist/module.mjs"
     }
   },
-  "main": "./dist/module.cjs",
-  "types": "./dist/types.d.ts",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "prepack": "nuxt-module-build",
+    "prepare": "nuxt-module-build --build",
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground"
@@ -28,7 +27,7 @@
     "@nuxt/module-builder": "^1.0.0",
     "@nuxt/schema": "^4.1.0",
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
-    "eslint": "^9.37.0",
+    "eslint": "^8.57.0",
     "nuxt": "^4.1.0"
   },
   "description": "## Development",
