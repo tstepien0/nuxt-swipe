@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs"
     }
   },
@@ -21,7 +22,7 @@
     "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground"
   },
   "dependencies": {
-    "@nuxt/kit": "^4.1.0",
+    "@nuxt/kit": "^3.16.0 || ^4.0.0",
     "mitt": "^3.0.0"
   },
   "devDependencies": {
@@ -40,10 +41,11 @@
   "keywords": [
     "gesture",
     "swipe",
+    "nuxt",
+    "nuxt3",
     "nuxt4",
-    "vue3",
     "vue",
-    "nuxt"
+    "vue3"
   ],
   "author": "emanuele-em",
   "bugs": {

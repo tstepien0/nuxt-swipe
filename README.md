@@ -1,105 +1,117 @@
 
 # Nuxt-Swipe
 
-This Nuxt 3 module allows you to easily add swipe gestures to your Vue 3 App. With just a few lines of code, you can enable swiping on your website or web application.
-
-
+This Nuxt module allows you to easily add swipe gestures to your Vue 3 / Nuxt 3 and Nuxt 4 applications. With just a few lines of code, you can enable swiping on your website or web application.
 
 ## Installation
 
-To add this module to your Nuxt.js project, run the following command:
+To add this module to your Nuxt project, run the following command:
 
 ```bash
-  npm i @emanuele-em/nuxt-swipe
-
+npm i @emanuele-em/nuxt-swipe
 ```
-Then, add nuxt-swipe to the modules section of your nuxt.config.js file:
 
-```javascript
-  export default {
-    modules: [
-        '@emanuele-em/nuxt-swipe'
-    ]
-  }
+Then, add `nuxt-swipe` to the modules section of your `nuxt.config.ts` (or `nuxt.config.js`) file:
 
+```typescript
+export default defineNuxtConfig({
+  modules: [
+    '@emanuele-em/nuxt-swipe'
+  ]
+})
 ```    
 
 ## Usage
 
-To use the module, simply add `<Swipe>` component, it will be the component that will intercept the _swipe_ gesture
+To use the module, simply add `<Swipe>` component, it will be the component that will intercept the _swipe_ gesture.
 
 For example:
-```javascript
+```html
 <template>
-    <Swipe>
-        <slot />
-    </Swipe>
+  <Swipe>
+    <slot />
+  </Swipe>
 </template>
 ```
 
-The module will create a plugin that will emit the `Swipe` event only after some checks to make sure that the gesture is really a swipe gesture.
+The module registers a plugin that will emit the `swipe` event only after checks ensure that the gesture is a valid swipe gesture.
 
-You can handle that event in the script section of your component, **remember to import nuxtApp**:
+You can handle that event in the script section of your component (remember to clean up listeners with `$off` on unmount):
 
 ```html
 <script setup>
-
+import { onMounted, onUnmounted } from 'vue'
 import { useNuxtApp } from '#app'
 
 const nuxtApp = useNuxtApp()
 
-nuxtApp.$bus.$on('swipe', (direction) => {
-    switch (direction) {
-        case 'left': 
-            // swiped left, do things
-            break;
-        case 'right':
-            // swiped right, do things
-            break;
-        case 'up':
-            // swiped up, do things
-            break;
-        case 'down':
-            // swiped down, do things
-            break;
-        default:
-            break;
-    }
+const handleSwipe = (direction) => {
+  switch (direction) {
+    case 'left':
+      // swiped left, do things
+      break
+    case 'right':
+      // swiped right, do things
+      break
+    case 'up':
+      // swiped up, do things
+      break
+    case 'down':
+      // swiped down, do things
+      break
+    default:
+      break
+  }
+}
+
+onMounted(() => {
+  nuxtApp.$bus.$on('swipe', handleSwipe)
 })
 
+onUnmounted(() => {
+  nuxtApp.$bus.$off('swipe', handleSwipe)
+})
 </script>
 ```
+
 ## Examples
 
-Swipe navigation with `Swipe` component as Default Layout
+Swipe navigation with `Swipe` component in Default Layout:
 
 _layouts/default.vue_
-```javascript
+```html
 <template>
-    <Swipe>
-        <slot />
-    </Swipe>
+  <Swipe>
+    <slot />
+  </Swipe>
 </template>
-  
+
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
 import { useNuxtApp, useRoute, navigateTo } from '#app'
 
 const nuxtApp = useNuxtApp()
 const routes = ['/', '/about']
 
-nuxtApp.$bus.$on('swipe', (direction) => {
-    let indexCurrentRoute = routes.indexOf(useRoute().path)
-    if (direction === 'left' && routes[indexCurrentRoute + 1]) {
-        indexCurrentRoute += 1
-    }
-    if (direction === 'right' && routes[indexCurrentRoute - 1]) {
-        indexCurrentRoute -= 1
-    }
-    return navigateTo(routes[indexCurrentRoute])
+const onSwipe = (direction) => {
+  let indexCurrentRoute = routes.indexOf(useRoute().path)
+  if (direction === 'left' && routes[indexCurrentRoute + 1]) {
+    indexCurrentRoute += 1
+  }
+  if (direction === 'right' && routes[indexCurrentRoute - 1]) {
+    indexCurrentRoute -= 1
+  }
+  return navigateTo(routes[indexCurrentRoute])
+}
+
+onMounted(() => {
+  nuxtApp.$bus.$on('swipe', onSwipe)
 })
 
+onUnmounted(() => {
+  nuxtApp.$bus.$off('swipe', onSwipe)
+})
 </script>
-  
 ```
 
 
