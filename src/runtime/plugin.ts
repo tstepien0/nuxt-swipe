@@ -1,117 +1,128 @@
-import { defineNuxtPlugin, navigateTo } from '#app'
-import mitt from "mitt";
-const emitter = mitt();
+import { defineNuxtPlugin } from '#app'
+import mitt from 'mitt'
 
-export default defineNuxtPlugin((NuxtApp) => {
-    let swipe
-    NuxtApp.provide('bus', {
-        $on: emitter.on,
-        $emit: emitter.emit,
-    })
+export default defineNuxtPlugin(() => {
+  let swipe: Swipe | null = null
+  const emitter = mitt()
 
-    NuxtApp.provide('startSwipe', (e) => {
-        swipe = new Swipe(e);
-    })
+  const bus = {
+    $on: emitter.on,
+    $off: emitter.off,
+    $emit: emitter.emit
+  }
 
-    NuxtApp.provide('handleSwipe', (e) => {
-        if (!swipe) {
-            return;
-        }
+  const startSwipe = (e: any) => {
+    swipe = new Swipe(e)
+  }
 
-        swipe.setEndEvent(e);
-        if (swipe.hasMultipleTouches()) {
-            swipe = null;
-            return;
-        }
-        if (swipe.isSwipeRight()) {
-            return NuxtApp.$bus.$emit('swipe', 'right')
-        }
-        if (swipe.isSwipeLeft()) {
-            return NuxtApp.$bus.$emit('swipe', 'left')
-        }
-        if (swipe.isSwipeDown()) {
-            return NuxtApp.$bus.$emit('swipe', 'down')
-        }
-        if (swipe.isSwipeUp()) {
-            return NuxtApp.$bus.$emit('swipe', 'up')
-        }
+  const handleSwipe = (e: any) => {
+    if (!swipe) {
+      return
+    }
 
+    swipe.setEndEvent(e)
+    if (swipe.hasMultipleTouches()) {
+      swipe = null
+      return
+    }
 
-        swipe = null;
-    })
+    let direction: string | null = null
+    if (swipe.isSwipeRight()) {
+      direction = 'right'
+    } else if (swipe.isSwipeLeft()) {
+      direction = 'left'
+    } else if (swipe.isSwipeDown()) {
+      direction = 'down'
+    } else if (swipe.isSwipeUp()) {
+      direction = 'up'
+    }
 
+    swipe = null
+
+    if (direction) {
+      bus.$emit('swipe', direction)
+    }
+  }
+
+  return {
+    provide: {
+      bus,
+      startSwipe,
+      handleSwipe
+    }
+  }
 })
 
 class Swipe {
-    static SWIPE_THRESHOLD = 50 // Minumum difference in pixels at which a swipe gesture is detected
+  static SWIPE_THRESHOLD = 50 // Minimum difference in pixels at which a swipe gesture is detected
 
-    static SWIPE_LEFT = 1
-    static SWIPE_RIGHT = 2
-    static SWIPE_UP = 3
-    static SWIPE_DOWN = 4
+  static SWIPE_LEFT = 1
+  static SWIPE_RIGHT = 2
+  static SWIPE_UP = 3
+  static SWIPE_DOWN = 4
 
-    constructor(startEvent, endEvent) {
-        this.startEvent = startEvent
-        this.endEvent = endEvent || null
+  startEvent: any
+  endEvent: any
 
+  constructor (startEvent: any, endEvent: any = null) {
+    this.startEvent = startEvent
+    this.endEvent = endEvent
+  }
+
+  isSwipeLeft (): boolean {
+    return this.getSwipeDirection() === Swipe.SWIPE_LEFT
+  }
+
+  isSwipeRight (): boolean {
+    return this.getSwipeDirection() === Swipe.SWIPE_RIGHT
+  }
+
+  isSwipeUp (): boolean {
+    return this.getSwipeDirection() === Swipe.SWIPE_UP
+  }
+
+  isSwipeDown (): boolean {
+    return this.getSwipeDirection() === Swipe.SWIPE_DOWN
+  }
+
+  hasMultipleTouches (): boolean {
+    return (
+      (this.startEvent?.touches?.length || 0) > 1 ||
+      (this.endEvent?.touches?.length || 0) > 1
+    )
+  }
+
+  getSwipeDirection (): number | null {
+    const start = this.startEvent?.changedTouches?.[0]
+    const end = this.endEvent?.changedTouches?.[0]
+
+    if (!start || !end) {
+      return null
     }
 
-    isSwipeLeft() {
-        return this.getSwipeDirection() == Swipe.SWIPE_LEFT
+    const horizontalDifference = start.screenX - end.screenX
+    const verticalDifference = start.screenY - end.screenY
+
+    // Horizontal difference dominates
+    if (Math.abs(horizontalDifference) > Math.abs(verticalDifference)) {
+      if (horizontalDifference >= Swipe.SWIPE_THRESHOLD) {
+        return Swipe.SWIPE_LEFT
+      } else if (horizontalDifference <= -Swipe.SWIPE_THRESHOLD) {
+        return Swipe.SWIPE_RIGHT
+      }
+    } else {
+      if (verticalDifference >= Swipe.SWIPE_THRESHOLD) {
+        return Swipe.SWIPE_UP
+      } else if (verticalDifference <= -Swipe.SWIPE_THRESHOLD) {
+        return Swipe.SWIPE_DOWN
+      }
     }
 
-    isSwipeRight() {
-        return this.getSwipeDirection() == Swipe.SWIPE_RIGHT
-    }
+    return null
+  }
 
-    isSwipeUp() {
-        return this.getSwipeDirection() == Swipe.SWIPE_UP
-    }
-
-    isSwipeDown() {
-        return this.getSwipeDirection() == Swipe.SWIPE_DOWN
-    }
-
-    hasMultipleTouches() {
-        return (
-            this.startEvent.touches.length > 1 || this.endEvent.touches.length > 1
-        )
-    }
-  
-    getSwipeDirection() {
-        let start = this.startEvent.changedTouches[0]
-        let end = this.endEvent.changedTouches[0]
-
-        if (!start || !end) {
-            return null
-        }
-
-        let horizontalDifference = start.screenX - end.screenX
-        let verticalDifference = start.screenY - end.screenY
-
-
-        // Horizontal difference dominates
-        if (Math.abs(horizontalDifference) > Math.abs(verticalDifference)) {
-            if (horizontalDifference >= Swipe.SWIPE_THRESHOLD) {
-                return Swipe.SWIPE_LEFT
-            } else if (horizontalDifference <= -Swipe.SWIPE_THRESHOLD) {
-                return Swipe.SWIPE_RIGHT
-            }
-
-            // Verical or no difference dominates
-        } else {
-            if (verticalDifference >= Swipe.SWIPE_THRESHOLD) {
-                return Swipe.SWIPE_UP
-            } else if (verticalDifference <= -Swipe.SWIPE_THRESHOLD) {
-                return Swipe.SWIPE_DOWN
-            }
-        }
-
-        return null
-    }
-
-    setEndEvent(endEvent) {
-        this.endEvent = endEvent
-    }
+  setEndEvent (endEvent: any) {
+    this.endEvent = endEvent
+  }
 }
 
